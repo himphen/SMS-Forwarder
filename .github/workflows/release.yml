@@ -3,7 +3,7 @@ name: Release APK
 on:
   push:
     tags:
-      - "v*"
+      - "v*.*.*"
 
 permissions:
   contents: write
@@ -35,28 +35,36 @@ jobs:
       - name: Install Android SDK platform
         run: |
           yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager "platform-tools" "platforms;android-36"
+          sdkmanager "platform-tools" "platforms;android-37.0"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
       - name: Prepare release metadata
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          ANDROID_VERSION_CODE_BASE: ${{ vars.ANDROID_VERSION_CODE_BASE }}
+          RELEASE_RUN_NUMBER: ${{ github.run_number }}
         run: |
-          VERSION_NAME="${GITHUB_REF_NAME#v}"
-          if [[ ! "$VERSION_NAME" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          ANDROID_VERSION_NAME="${RELEASE_TAG#v}"
+          if [[ ! "$ANDROID_VERSION_NAME" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "Release tags must use the vMAJOR.MINOR.PATCH format."
             exit 1
           fi
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION_NAME"
-          VERSION_CODE=$((MAJOR * 1000000 + MINOR * 1000 + PATCH))
 
-          if [ "$VERSION_CODE" -lt 1 ] || [ "$VERSION_CODE" -gt 2100000000 ]; then
-            echo "The version tag produces an invalid Android versionCode."
+          if [[ ! "$ANDROID_VERSION_CODE_BASE" =~ ^[0-9]+$ ]]; then
+            echo "ANDROID_VERSION_CODE_BASE must be a non-negative integer repository variable."
             exit 1
           fi
 
-          echo "VERSION_NAME=$VERSION_NAME" >> "$GITHUB_ENV"
-          echo "VERSION_CODE=$VERSION_CODE" >> "$GITHUB_ENV"
+          ANDROID_VERSION_CODE=$((ANDROID_VERSION_CODE_BASE + RELEASE_RUN_NUMBER))
+          if [ "$ANDROID_VERSION_CODE" -lt 1 ] || [ "$ANDROID_VERSION_CODE" -gt 2100000000 ]; then
+            echo "The calculated Android versionCode must be a positive integer no greater than 2100000000."
+            exit 1
+          fi
+
+          echo "ANDROID_VERSION_NAME=$ANDROID_VERSION_NAME" >> "$GITHUB_ENV"
+          echo "ANDROID_VERSION_CODE=$ANDROID_VERSION_CODE" >> "$GITHUB_ENV"
 
       - name: Decode release keystore
         env:
@@ -88,14 +96,11 @@ jobs:
           RELEASE_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           RELEASE_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
-          ./gradlew clean assembleRelease \
-            -PversionName="$VERSION_NAME" \
-            -PversionCode="$VERSION_CODE" \
-            --stacktrace
+          ./gradlew clean :app:assembleRelease --stacktrace
 
       - name: Generate checksum
         run: |
-          APK_NAME="SMS-Forwarder-${VERSION_NAME}.apk"
+          APK_NAME="SMS-Forwarder-${ANDROID_VERSION_NAME}.apk"
           CHECKSUM_NAME="${APK_NAME}.sha256"
           cp app/build/outputs/apk/release/app-release.apk "$APK_NAME"
           shasum -a 256 "$APK_NAME" > "$CHECKSUM_NAME"
@@ -110,7 +115,7 @@ jobs:
             "$APK_NAME" \
             "$CHECKSUM_NAME" \
             --repo "$GITHUB_REPOSITORY" \
-            --title "SMS Forwarder $VERSION_NAME" \
+            --title "SMS Forwarder $ANDROID_VERSION_NAME" \
             --generate-notes
 
       - name: Remove temporary keystore

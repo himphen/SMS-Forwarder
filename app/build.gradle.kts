@@ -14,8 +14,17 @@ val releaseSigningReady = listOf(
     releaseKeyAlias,
     releaseKeyPassword
 ).all { !it.isNullOrBlank() }
-val requestedVersionCode = providers.gradleProperty("versionCode").orNull?.toIntOrNull()
-val requestedVersionName = providers.gradleProperty("versionName").orNull
+val versionNamePrefix = "Hong Kong Style French Toast"
+val releaseVersion = (providers.environmentVariable("ANDROID_VERSION_NAME").orNull ?: "1.0.0")
+    .removePrefix("v")
+require(Regex("""\d+\.\d+\.\d+""").matches(releaseVersion)) {
+    "ANDROID_VERSION_NAME must use MAJOR.MINOR.PATCH format after an optional 'v' prefix."
+}
+val versionCodeInput = providers.environmentVariable("ANDROID_VERSION_CODE").orNull ?: "1"
+val releaseVersionCode = versionCodeInput.toIntOrNull()
+require(releaseVersionCode != null && releaseVersionCode > 0) {
+    "ANDROID_VERSION_CODE must be a positive integer."
+}
 
 plugins {
     alias(libs.plugins.android.application)
@@ -29,9 +38,9 @@ android {
     defaultConfig {
         applicationId = "com.himphen.playground.smsforwarder"
         minSdk = 26
-        targetSdk = 36
-        versionCode = requestedVersionCode ?: 1
-        versionName = requestedVersionName ?: "1.0"
+        targetSdk = 37
+        versionCode = releaseVersionCode
+        versionName = "$versionNamePrefix $releaseVersion"
     }
 
     signingConfigs {

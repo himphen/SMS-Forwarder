@@ -1,5 +1,7 @@
 # SMS Forwarder
 
+<img src="assets/playstore-icon.png" width="100" height="100" alt="App Icon>
+
 SMS Forwarder is an Android app that forwards incoming SMS messages to a Telegram chat through the Telegram Bot API. It is designed for private, self-hosted use and is distributed as an APK through GitHub Releases.
 
 ## Features
@@ -120,7 +122,15 @@ This app forwards the content of every received SMS to the configured Telegram c
 
 ## GitHub Releases
 
-Pull requests and pushes to the main development branch run the GitHub Actions build and lint workflow. A release is created only when a version tag such as `v1.0.0` is pushed.
+Pull requests and pushes to the main development branch run the GitHub Actions build and lint workflow. A GitHub Release is created only when a tag matching `vMAJOR.MINOR.PATCH`, such as `v1.0.0`, is pushed.
+
+The release workflow removes the optional `v` prefix, validates the release version, and sets the Android version name to:
+
+```text
+Hong Kong Style French Toast 1.0.0
+```
+
+Set the repository variable `ANDROID_VERSION_CODE_BASE` to a non-negative integer. Each release derives `ANDROID_VERSION_CODE` by adding the workflow run number to this base value.
 
 Repository maintainers must configure these GitHub Actions Secrets before creating a release:
 
@@ -129,7 +139,7 @@ Repository maintainers must configure these GitHub Actions Secrets before creati
 - `ANDROID_KEY_ALIAS`
 - `ANDROID_KEY_PASSWORD`
 
-The release workflow decodes the keystore only in the temporary GitHub-hosted runner, builds a signed APK, generates a SHA-256 checksum, and uploads both files to the GitHub Release.
+The release workflow decodes the keystore only in the temporary GitHub-hosted runner, builds a signed APK, generates a SHA-256 checksum, and uploads both files to the GitHub Release. It only publishes GitHub Release assets; it does not upload to Google Play or build an AAB.
 
 To publish a release:
 
