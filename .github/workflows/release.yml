@@ -102,10 +102,12 @@ jobs:
         run: |
           APK_NAME="SMS-Forwarder-${ANDROID_VERSION_NAME}.apk"
           CHECKSUM_NAME="${APK_NAME}.sha256"
+          APP_VERSION_NAME="$(./gradlew -q :app:printVersionName)"
           cp app/build/outputs/apk/release/app-release.apk "$APK_NAME"
           shasum -a 256 "$APK_NAME" > "$CHECKSUM_NAME"
           echo "APK_NAME=$APK_NAME" >> "$GITHUB_ENV"
           echo "CHECKSUM_NAME=$CHECKSUM_NAME" >> "$GITHUB_ENV"
+          echo "APP_VERSION_NAME=$APP_VERSION_NAME" >> "$GITHUB_ENV"
 
       - name: Create GitHub Release
         env:
@@ -115,7 +117,7 @@ jobs:
             "$APK_NAME" \
             "$CHECKSUM_NAME" \
             --repo "$GITHUB_REPOSITORY" \
-            --title "SMS Forwarder $ANDROID_VERSION_NAME" \
+            --title "$APP_VERSION_NAME" \
             --generate-notes
 
       - name: Remove temporary keystore

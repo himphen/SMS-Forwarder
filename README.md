@@ -1,6 +1,6 @@
 # SMS Forwarder
 
-<img src="assets/playstore-icon.png" width="100" height="100" alt="App Icon>
+<img src="assets/playstore-icon.png" width="100" height="100" alt="App Icon">
 
 SMS Forwarder is an Android app that forwards incoming SMS messages to a Telegram chat through the Telegram Bot API. It is designed for private, self-hosted use and is distributed as an APK through GitHub Releases.
 
