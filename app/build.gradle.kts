@@ -14,7 +14,7 @@ val releaseSigningReady = listOf(
     releaseKeyAlias,
     releaseKeyPassword
 ).all { !it.isNullOrBlank() }
-val versionNamePrefix = "Hong Kong Style French Toast"
+val versionNamePrefix = "Red Bean Ice"
 val releaseVersion = (providers.environmentVariable("ANDROID_VERSION_NAME").orNull ?: "1.0.0")
     .removePrefix("v")
 require(Regex("""\d+\.\d+\.\d+""").matches(releaseVersion)) {
